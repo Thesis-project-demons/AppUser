@@ -88,7 +88,7 @@ class LoginScreen extends Component {
         console.log(res.data);
         if (res.data.msg === "Logged in!") {
           // this.setState({isLoading:false})
-          this.props.navigation.navigate("Verification");
+          this.props.navigation.navigate("Home");
           let storeData = async () => {
             try {
               await AsyncStorage.setItem("user", JSON.stringify(res.data.user));
