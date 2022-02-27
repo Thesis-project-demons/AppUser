@@ -1,11 +1,12 @@
 import React, { Component } from "react";
-import { SafeAreaView, View, BackHandler, StatusBar, StyleSheet, ScrollView, FlatList, Image, Text, TouchableOpacity } from "react-native";
+import { SafeAreaView, View, BackHandler, AsyncStorage, StatusBar, StyleSheet, ScrollView, FlatList, Image, Text, TouchableOpacity,Linking } from "react-native";
 import { withNavigation } from "react-navigation";
 import { Colors, Fonts, Sizes } from "../../constants/styles";
 import { MaterialIcons } from '@expo/vector-icons';
 import CollapsingToolbar from "../../components/sliverAppBarScreen";
 import MapView, { Marker } from "react-native-maps";
 import { Snackbar } from "react-native-paper";
+import axios from'axios'
 
 const reviewsList = [
     {
@@ -87,7 +88,13 @@ class ServiceProviderScreen extends Component {
         this.props.navigation.pop();
         return true;
     };
-
+    _retrieveData = async () => {
+          const value = await AsyncStorage.getItem('user_id');
+          if (value !== null) {
+            // We have data!!
+ return value
+        }
+        }
     item = this.props.navigation.getParam('marker');
 
     state = {
@@ -95,6 +102,7 @@ class ServiceProviderScreen extends Component {
         servicesData: servicesList,
         showSnackBar: false,
         isFavorite: false,
+        showPhone:false,
     }
 
     render() {
@@ -120,13 +128,39 @@ class ServiceProviderScreen extends Component {
                                 style={{
                                     marginRight: Sizes.fixPadding + 5.0
                                 }}
-                                onPress={() => this.setState({ showSnackBar: true, isFavorite: !this.state.isFavorite })}
+                                onPress={() => {this.setState({ showSnackBar: true, isFavorite: !this.state.isFavorite })
+                            
+                                var user_id = this._retrieveData()
+                                console.log(user_id)
+                                 axios.post("http://192.168.22.165:5000/user/addFavorite", {
+                                 user_id : user_id , 
+                                mechanic_id:this.item.mechanic_id
+
+                                 }).then(res=> { 
+                                    console.log(res.data)
+
+                                 })
+
+
+                            }}
                             />
                             <Image
                                 source={require('../../assets/images/direction.png')}
                                 style={{ width: 20.0, height: 20.0, }}
                             />
-                            <MaterialIcons name="phone" size={24} color={Colors.whiteColor}
+                            <MaterialIcons name="phone" size={24} color={Colors.whiteColor } onPress ={()=>{
+    let phoneNumber = '';
+    if (Platform.OS === 'android') {
+        console.log(this.item.phone)
+    phoneNumber = `tel:${this.item.phone}`
+  }
+  else {
+    phoneNumber = `telprompt:${this.item.phone}`;
+  }
+
+  Linking.openURL(phoneNumber);
+
+                             }}
                                 style={{ marginLeft: Sizes.fixPadding + 5.0 }}
                             />
                         </TouchableOpacity>
@@ -341,7 +375,7 @@ class ServiceProviderScreen extends Component {
                     Opening Hours
                 </Text>
                 <Text style={{ ...Fonts.primaryColor12Regular, marginTop: Sizes.fixPadding - 5.0 }}>
-                    Open now (09:00 AM - 22:00 PM)
+                    Only Available On () (09:00 AM - 22:00 PM) 
                 </Text>
             </View>
         )
@@ -356,6 +390,7 @@ class ServiceProviderScreen extends Component {
     }
 
     bookNowButton() {
+    
         return (
             <TouchableOpacity
                 activeOpacity={0.9}
@@ -489,7 +524,7 @@ class ServiceProviderScreen extends Component {
                         style={{ marginHorizontal: Sizes.fixPadding - 5.0 }}
                     />
                     <Text style={{ ...Fonts.blackColor14Regular }}>
-                        (728 Reviews)
+                        ({this.item.count})
                     </Text>
                 </View>
             </View>
